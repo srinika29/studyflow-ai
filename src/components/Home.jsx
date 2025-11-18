@@ -6,30 +6,48 @@ function Home({ navigate, notes, setNotes }) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
 
-  const handleFileUpload = async (file) => {
-    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-      setUploadStatus('Processing PDF...');
-      try {
-        const text = await parsePDF(file);
-        setNotes(text);
-        setUploadStatus('PDF processed successfully!');
-        setTimeout(() => setUploadStatus(''), 3000);
-      } catch (error) {
-        setUploadStatus('Error processing PDF. Please paste text instead.');
-        console.error(error);
+  const handleFileUpload = async (input) => {
+    const file = input?.target?.files?.[0] || input;
+    if (!file) return;
+  
+    setIsLoading(true);
+    setUploadStatus("Processing file...");
+  
+    try {
+      let extractedText = "";
+  
+      // --- STRICT PDF HANDLING ---
+      if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+        setUploadStatus("Processing PDF...");
+        extractedText = await parsePDF(file);  // Your pdf.js parser
+        // NEVER use FileReader for PDFs
       }
-    } else if (file.type.startsWith('text/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setNotes(e.target.result);
-        setUploadStatus('File loaded successfully!');
-        setTimeout(() => setUploadStatus(''), 3000);
-      };
-      reader.readAsText(file);
-    } else {
-      setUploadStatus('Unsupported file type. Please upload PDF or text files.');
+  
+      // --- TEXT FILES (SAFE) ---
+      else if (file.type.startsWith("text/") || file.name.endsWith(".txt")) {
+        extractedText = await file.text();
+      }
+  
+      // --- UNSUPPORTED ---
+      else {
+        setUploadStatus("Unsupported file. Upload PDF or text files.");
+        setIsLoading(false);
+        return;
+      }
+  
+      // --- APPLY ---
+      setNotes(extractedText);
+      setUploadStatus("File processed successfully!");
+  
+      setTimeout(() => setUploadStatus(""), 3000);
+    } catch (error) {
+      console.error("File upload error:", error);
+      setUploadStatus("Error processing file.");
+      alert("Error: " + error.message);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  };  
 
   const handleDrop = (e) => {
     e.preventDefault();
