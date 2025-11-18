@@ -6,38 +6,7 @@ function Home({ navigate, notes, setNotes }) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    setIsLoading(true);
-    
-    try {
-      let extractedText = '';
-      
-      if (file.type === 'application/pdf') {
-        // Handle PDF
-        extractedText = await extractTextFromPDF(file);
-      } else if (file.type === 'text/plain') {
-        // Handle TXT
-        extractedText = await file.text();
-      } else {
-        alert('Please upload PDF or TXT files only');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Set the extracted text to your notes state
-      setNotes(extractedText);
-      setIsLoading(false);
-      
-    } catch (error) {
-      console.error('File upload error:', error);
-      alert('Error reading file: ' + error.message);
-      setIsLoading(false);
-    }
-  };
-
+  const handleFileUpload = async (file) => { if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) { setUploadStatus('Processing PDF...'); try { const text = await parsePDF(file); setNotes(text); setUploadStatus('PDF processed successfully!'); setTimeout(() => setUploadStatus(''), 3000); } catch (error) { setUploadStatus('Error processing PDF. Please paste text instead.'); console.error(error); } } else if (file.type.startsWith('text/')) { const reader = new FileReader(); reader.onload = (e) => { setNotes(e.target.result); setUploadStatus('File loaded successfully!'); setTimeout(() => setUploadStatus(''), 3000); }; reader.readAsText(file); } else { setUploadStatus('Unsupported file type. Please upload PDF or text files.'); } };
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
