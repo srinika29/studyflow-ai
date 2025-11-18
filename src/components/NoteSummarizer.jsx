@@ -1,30 +1,6 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, Copy, Check } from 'lucide-react';
 import { callClaudeAPI } from '../utils/api';
-import * as pdfjsLib from 'pdfjs-dist';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
-async function extractTextFromPDF(file) {
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let fullText = '';
-    
-    // Loop through all pages
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(item => item.str).join(' ');
-      fullText += pageText + '\n\n';
-    }
-    
-    return fullText;
-  } catch (error) {
-    console.error('PDF parsing error:', error);
-    throw new Error('Failed to parse PDF. Please try a different file.');
-  }
-}
 
 function NoteSummarizer({ notes, setNotes }) {
   const [summary, setSummary] = useState('');
