@@ -6,48 +6,37 @@ function Home({ navigate, notes, setNotes }) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
 
-  const handleFileUpload = async (input) => {
-    const file = input?.target?.files?.[0] || input;
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
     if (!file) return;
-  
+    
     setIsLoading(true);
-    setUploadStatus("Processing file...");
-  
+    
     try {
-      let extractedText = "";
-  
-      // --- STRICT PDF HANDLING ---
-      if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
-        setUploadStatus("Processing PDF...");
-        extractedText = await parsePDF(file);  // Your pdf.js parser
-        // NEVER use FileReader for PDFs
-      }
-  
-      // --- TEXT FILES (SAFE) ---
-      else if (file.type.startsWith("text/") || file.name.endsWith(".txt")) {
+      let extractedText = '';
+      
+      if (file.type === 'application/pdf') {
+        // Handle PDF
+        extractedText = await extractTextFromPDF(file);
+      } else if (file.type === 'text/plain') {
+        // Handle TXT
         extractedText = await file.text();
-      }
-  
-      // --- UNSUPPORTED ---
-      else {
-        setUploadStatus("Unsupported file. Upload PDF or text files.");
+      } else {
+        alert('Please upload PDF or TXT files only');
         setIsLoading(false);
         return;
       }
-  
-      // --- APPLY ---
+      
+      // Set the extracted text to your notes state
       setNotes(extractedText);
-      setUploadStatus("File processed successfully!");
-  
-      setTimeout(() => setUploadStatus(""), 3000);
+      setIsLoading(false);
+      
     } catch (error) {
-      console.error("File upload error:", error);
-      setUploadStatus("Error processing file.");
-      alert("Error: " + error.message);
-    } finally {
+      console.error('File upload error:', error);
+      alert('Error reading file: ' + error.message);
       setIsLoading(false);
     }
-  };  
+  };
 
   const handleDrop = (e) => {
     e.preventDefault();
