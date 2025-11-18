@@ -1,15 +1,13 @@
-import * as pdfjsLib from 'pdfjs-dist';
+import {
+  GlobalWorkerOptions,
+  getDocument,
+  version as pdfjsVersion,
+} from 'pdfjs-dist/build/pdf';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker?url';
 
-// Configure PDF.js worker
-// Use CDN for better compatibility with Vite
+// Configure PDF.js worker (Vite-friendly)
 if (typeof window !== 'undefined') {
-  // Try to use the worker from node_modules, fallback to CDN
-  try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-  } catch (error) {
-    // Fallback to unpkg CDN
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
-  }
+  GlobalWorkerOptions.workerSrc = pdfWorker;
 }
 
 export const callClaudeAPI = async (prompt, type = 'general') => {
@@ -37,11 +35,11 @@ export const callClaudeAPI = async (prompt, type = 'general') => {
 export const parsePDF = async (file) => {
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ 
+    const pdf = await getDocument({ 
       data: arrayBuffer,
       useSystemFonts: true,
       verbosity: 0,
-      standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/standard_fonts/`
+      standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/standard_fonts/`
     }).promise;
     
     let fullText = '';
